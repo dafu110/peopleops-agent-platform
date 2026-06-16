@@ -3,4 +3,3 @@ venv/
 __pycache__/
 .pytest_cache/
 *.pyc
-data/员工手册测试版.pdf
