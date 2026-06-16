@@ -10,4 +10,4 @@ sentence-transformers
 torchvision
 langchain-community
 langchain-core
-protobuf
+protobuf<=3.20.3
