@@ -4,9 +4,12 @@ from langchain_core.tools import tool
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
+from .audit import write_audit_event
 from .config import get_chat_model
 from .matcher import analyze_resume
 from .rag_engine import ask_rag
+from .security import redact_messages, redact_pii
+from .tools import schedule_interview
 
 
 Intent = Literal["action_tool", "resume", "rag"]
@@ -45,14 +48,9 @@ RESUME_KEYWORDS = [
 
 
 @tool
-def send_interview_email(candidate_name: str, interview_time: str) -> str:
-    """
-    当用户明确要求给候选人发送面试邀约邮件、通知候选人、或者安排面试时间时，调用此工具。
-    """
-    return (
-        f"**[系统动作]** 已模拟发送面试邀约：候选人【{candidate_name}】，"
-        f"面试时间【{interview_time}】。后续可对接企业邮件、ATS 或日历系统。"
-    )
+def schedule_interview_tool(candidate_name: str, interview_time: str) -> str:
+    """当用户要求安排面试、发送面试邀约或通知候选人时调用。"""
+    return schedule_interview(candidate_name, interview_time).to_markdown()
 
 
 def keyword_intent(text: str) -> Intent:
@@ -65,11 +63,12 @@ def keyword_intent(text: str) -> Intent:
 
 
 def _format_history(history: List[Dict[str, str]], limit: int = 6) -> str:
-    if not history:
+    safe_history = redact_messages(history[-limit:])
+    if not safe_history:
         return "无"
 
     lines = []
-    for msg in history[-limit:]:
+    for msg in safe_history:
         role = "用户" if msg.get("role") == "user" else "助手"
         content = str(msg.get("content", "")).strip()
         if content:
@@ -94,7 +93,7 @@ rag: 用户询问公司制度、考勤、报销、请假、福利、企业文化
 {_format_history(history)}
 
 【当前用户输入】
-{text}
+{redact_pii(text)}
 
 请输出分类结果："""
 
@@ -104,15 +103,19 @@ rag: 用户询问公司制度、考勤、报销、请假、福利、企业文化
         intent_result = response.content.strip().lower()
 
         if "action_tool" in intent_result:
-            return {"intent": "action_tool"}
-        if "resume" in intent_result:
-            return {"intent": "resume"}
-        if "rag" in intent_result:
-            return {"intent": "rag"}
+            intent = "action_tool"
+        elif "resume" in intent_result:
+            intent = "resume"
+        elif "rag" in intent_result:
+            intent = "rag"
+        else:
+            intent = keyword_intent(text)
     except Exception as exc:
         print(f"[Router fallback] {exc}")
+        intent = keyword_intent(text)
 
-    return {"intent": keyword_intent(text)}
+    write_audit_event("router.intent", {"input_text": text, "intent": intent})
+    return {"intent": intent}
 
 
 def handle_rag(state: AgentState):
@@ -133,10 +136,20 @@ def handle_resume(state: AgentState):
         jd_text = user_msg
 
     resume_with_context = (
-        f"{resume_content}\n\n"
-        f"【本轮用户问题或补充条件】\n{user_msg or '无'}"
+        f"{redact_pii(resume_content)}\n\n"
+        f"【本轮用户问题或补充条件】\n{redact_pii(user_msg) or '无'}"
     )
-    result = analyze_resume(resume_text=resume_with_context, jd_text=jd_text)
+    result = analyze_resume(resume_text=resume_with_context, jd_text=redact_pii(jd_text))
+
+    write_audit_event(
+        "resume.analysis",
+        {
+            "input_text": user_msg,
+            "score": result.get("score", 0),
+            "pros_count": len(result.get("pros", [])),
+            "cons_count": len(result.get("cons", [])),
+        },
+    )
 
     pros = "\n".join([f"{idx}. {item}" for idx, item in enumerate(result["pros"], start=1)])
     cons = "\n".join([f"{idx}. {item}" for idx, item in enumerate(result["cons"], start=1)])
@@ -160,15 +173,16 @@ def handle_action_tool(state: AgentState):
 
     try:
         llm = get_chat_model(temperature=0.0)
-        llm_with_tools = llm.bind_tools([send_interview_email])
+        llm_with_tools = llm.bind_tools([schedule_interview_tool])
         ai_msg = llm_with_tools.invoke(
-            f"用户当前说的话：{user_msg}。如果需要发面试邀约，请提取候选人姓名和面试时间并调用工具。"
+            f"用户当前说的话：{redact_pii(user_msg)}。如果需要发面试邀约，请提取候选人姓名和面试时间并调用工具。"
         )
 
         if ai_msg.tool_calls:
             args = ai_msg.tool_calls[0]["args"]
-            return {"reply": send_interview_email.invoke(args)}
+            return {"reply": schedule_interview_tool.invoke(args)}
     except Exception as exc:
+        write_audit_event("tool.error", {"input_text": user_msg, "error": str(exc)})
         return {"reply": f"已识别到行政动作意图，但工具调用失败：{exc}"}
 
     return {

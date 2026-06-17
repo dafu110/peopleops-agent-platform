@@ -1,5 +1,7 @@
+import json
+import shutil
 from functools import lru_cache
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
@@ -8,6 +10,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from .audit import write_audit_event
 from .config import get_chat_model, get_settings
 
 
@@ -17,24 +20,96 @@ def _source_label(doc: Document) -> str:
     return f"《{settings.policy_pdf_path.name}》第 {page_num} 页"
 
 
+def _current_manifest() -> Dict[str, object]:
+    settings = get_settings()
+    stat = settings.policy_pdf_path.stat()
+    return {
+        "policy_pdf_path": str(settings.policy_pdf_path),
+        "policy_pdf_size": stat.st_size,
+        "policy_pdf_mtime": stat.st_mtime,
+        "embedding_model": settings.embedding_model,
+        "rag_chunk_size": settings.rag_chunk_size,
+        "rag_chunk_overlap": settings.rag_chunk_overlap,
+    }
+
+
+def _read_manifest() -> Dict[str, object] | None:
+    settings = get_settings()
+    if not settings.rag_manifest_path.exists():
+        return None
+    try:
+        return json.loads(settings.rag_manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def _write_manifest(manifest: Dict[str, object]) -> None:
+    settings = get_settings()
+    settings.rag_manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    settings.rag_manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _has_persisted_index() -> bool:
+    settings = get_settings()
+    return settings.chroma_persist_dir.exists() and any(settings.chroma_persist_dir.iterdir())
+
+
+def _index_is_current() -> bool:
+    settings = get_settings()
+    if not settings.policy_pdf_path.exists() or not _has_persisted_index():
+        return False
+    return _read_manifest() == _current_manifest()
+
+
+def reset_rag_index() -> None:
+    settings = get_settings()
+    _build_retriever.cache_clear()
+    if settings.chroma_persist_dir.exists():
+        shutil.rmtree(settings.chroma_persist_dir)
+    settings.chroma_persist_dir.mkdir(parents=True, exist_ok=True)
+
+
 @lru_cache(maxsize=1)
 def _build_retriever():
     settings = get_settings()
     if not settings.policy_pdf_path.exists():
         return None
 
-    loader = PyPDFLoader(str(settings.policy_pdf_path))
-    documents = loader.load()
-    if not documents:
-        return None
-
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=settings.rag_chunk_size,
-        chunk_overlap=settings.rag_chunk_overlap,
-    )
-    splits = splitter.split_documents(documents)
     embeddings = HuggingFaceEmbeddings(model_name=settings.embedding_model)
-    vectorstore = Chroma.from_documents(documents=splits, embedding=embeddings)
+
+    if _index_is_current():
+        vectorstore = Chroma(
+            persist_directory=str(settings.chroma_persist_dir),
+            embedding_function=embeddings,
+        )
+    else:
+        reset_rag_index()
+        loader = PyPDFLoader(str(settings.policy_pdf_path))
+        documents = loader.load()
+        if not documents:
+            return None
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=settings.rag_chunk_size,
+            chunk_overlap=settings.rag_chunk_overlap,
+        )
+        splits = splitter.split_documents(documents)
+        vectorstore = Chroma.from_documents(
+            documents=splits,
+            embedding=embeddings,
+            persist_directory=str(settings.chroma_persist_dir),
+        )
+        vectorstore.persist()
+        _write_manifest(_current_manifest())
+        write_audit_event(
+            "rag.index_rebuilt",
+            {
+                "policy_pdf_path": str(settings.policy_pdf_path),
+                "chunk_count": len(splits),
+                "persist_directory": str(settings.chroma_persist_dir),
+            },
+        )
+
     return vectorstore.as_retriever(search_kwargs={"k": settings.rag_top_k})
 
 
@@ -61,6 +136,7 @@ def ask_rag(question: str) -> str:
     try:
         context_text, sources = retrieve_policy_context(question)
         if not context_text:
+            write_audit_event("rag.no_context", {"question": question})
             return "未在企业知识库中检索到相关内容，请补充制度文档后再试。"
 
         llm = get_chat_model(temperature=0.1)
@@ -79,6 +155,15 @@ def ask_rag(question: str) -> str:
         )
         response = llm.invoke(prompt)
 
+        write_audit_event(
+            "rag.answer",
+            {
+                "question": question,
+                "sources": sources,
+                "persist_directory": str(get_settings().chroma_persist_dir),
+            },
+        )
+
         sources_markdown = "\n".join([f"- {source}" for source in sources])
         return f"""{response.content}
 
@@ -87,4 +172,5 @@ def ask_rag(question: str) -> str:
 {sources_markdown}
 """
     except Exception as exc:
+        write_audit_event("rag.error", {"question": question, "error": str(exc)})
         return f"企业知识库检索失败：{exc}"

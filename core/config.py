@@ -12,11 +12,20 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 @dataclass(frozen=True)
 class Settings:
+    app_name: str
     api_key: Optional[str]
     api_base: Optional[str]
     chat_model: str
     embedding_model: str
     policy_pdf_path: Path
+    chroma_persist_dir: Path
+    rag_manifest_path: Path
+    db_path: Path
+    audit_log_path: Path
+    email_draft_dir: Path
+    calendar_dir: Path
+    access_password: Optional[str]
+    tool_execution_mode: str
     rag_chunk_size: int
     rag_chunk_overlap: int
     rag_top_k: int
@@ -24,6 +33,15 @@ class Settings:
     @property
     def has_llm_config(self) -> bool:
         return bool(self.api_key and self.api_base)
+
+
+def _path_env(name: str, default: str) -> Path:
+    import os
+
+    value = Path(os.getenv(name, default))
+    if value.is_absolute():
+        return value
+    return ROOT_DIR / value
 
 
 def _int_env(name: str, default: int) -> int:
@@ -44,17 +62,21 @@ def get_settings() -> Settings:
 
     load_dotenv()
 
-    policy_pdf = os.getenv("HR_POLICY_PDF", "data/员工手册测试版.pdf")
-    policy_pdf_path = Path(policy_pdf)
-    if not policy_pdf_path.is_absolute():
-        policy_pdf_path = ROOT_DIR / policy_pdf_path
-
     return Settings(
+        app_name=os.getenv("APP_NAME", "PeopleOps Agent Platform"),
         api_key=os.getenv("OPENAI_API_KEY"),
         api_base=os.getenv("OPENAI_API_BASE"),
         chat_model=os.getenv("OPENAI_MODEL", "deepseek-chat"),
         embedding_model=os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2"),
-        policy_pdf_path=policy_pdf_path,
+        policy_pdf_path=_path_env("HR_POLICY_PDF", "data/员工手册测试版.pdf"),
+        chroma_persist_dir=_path_env("CHROMA_PERSIST_DIR", ".chroma/policy"),
+        rag_manifest_path=_path_env("RAG_MANIFEST_PATH", ".chroma/policy/manifest.json"),
+        db_path=_path_env("APP_DB_PATH", ".runtime/peopleops.sqlite3"),
+        audit_log_path=_path_env("AUDIT_LOG_PATH", ".runtime/audit/events.jsonl"),
+        email_draft_dir=_path_env("EMAIL_DRAFT_DIR", ".runtime/email_drafts"),
+        calendar_dir=_path_env("CALENDAR_DIR", ".runtime/calendar"),
+        access_password=os.getenv("ACCESS_PASSWORD"),
+        tool_execution_mode=os.getenv("TOOL_EXECUTION_MODE", "local"),
         rag_chunk_size=_int_env("RAG_CHUNK_SIZE", 400),
         rag_chunk_overlap=_int_env("RAG_CHUNK_OVERLAP", 40),
         rag_top_k=_int_env("RAG_TOP_K", 3),
