@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lightweight test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install fastapi uvicorn python-dotenv pypdf
+
+      - name: Compile core modules
+        run: |
+          python -m py_compile \
+            api.py app.py \
+            core/config.py core/auth.py core/database.py core/security.py \
+            core/audit.py core/tools.py core/pdf_utils.py core/matcher.py
+
+      - name: Run core unit tests
+        run: python -m unittest discover -s tests

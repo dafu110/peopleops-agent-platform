@@ -1,10 +1,33 @@
+import contextvars
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
+from uuid import uuid4
 
 from .config import get_settings
 from .security import redact_payload
+
+
+_request_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("request_id", default=None)
+_actor: contextvars.ContextVar[str | None] = contextvars.ContextVar("actor", default=None)
+
+
+def set_audit_context(*, request_id: str | None = None, actor: str | None = None) -> None:
+    if request_id is not None:
+        _request_id.set(request_id)
+    if actor is not None:
+        _actor.set(actor)
+
+
+def clear_audit_context() -> None:
+    _request_id.set(None)
+    _actor.set(None)
+
+
+def get_request_id() -> str | None:
+    return _request_id.get()
 
 
 def _rotate_if_needed(path: Path, max_bytes: int) -> None:
@@ -16,17 +39,60 @@ def _rotate_if_needed(path: Path, max_bytes: int) -> None:
     path.replace(rotated_path)
 
 
-def write_audit_event(event_type: str, payload: Dict[str, Any]) -> None:
+def _hash_event(event: Dict[str, Any]) -> str:
+    encoded = json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _last_event_hash(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    last_hash: str | None = None
+    with path.open("r", encoding="utf-8") as file:
+        for line in file:
+            if not line.strip():
+                continue
+            try:
+                last_hash = json.loads(line).get("event_hash") or last_hash
+            except json.JSONDecodeError:
+                continue
+    return last_hash
+
+
+def write_audit_event(event_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     settings = get_settings()
     settings.audit_log_path.parent.mkdir(parents=True, exist_ok=True)
     _rotate_if_needed(settings.audit_log_path, settings.audit_log_max_bytes)
 
-    safe_payload = redact_payload(payload)
     event = {
+        "schema_version": "2026-06-24",
+        "event_id": uuid4().hex,
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "request_id": get_request_id(),
+        "actor": _actor.get(),
         "event_type": event_type,
-        "payload": safe_payload,
+        "payload": redact_payload(payload),
     }
+    if settings.audit_hash_chain_enabled:
+        event["previous_event_hash"] = _last_event_hash(settings.audit_log_path)
+        event["event_hash"] = _hash_event(event)
 
     with settings.audit_log_path.open("a", encoding="utf-8") as file:
         file.write(json.dumps(event, ensure_ascii=False) + "\n")
+    return event
+
+
+def read_audit_events(limit: int = 50) -> List[Dict[str, Any]]:
+    settings = get_settings()
+    if not settings.audit_log_path.exists():
+        return []
+    events: List[Dict[str, Any]] = []
+    with settings.audit_log_path.open("r", encoding="utf-8") as file:
+        for line in file:
+            if not line.strip():
+                continue
+            try:
+                events.append(json.loads(line))
+            except json.JSONDecodeError:
+                events.append({"event_type": "audit.corrupt_line", "raw": line.strip()[:200]})
+    return events[-limit:]

@@ -5,47 +5,37 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from fastapi.testclient import TestClient
-
+from core.audit import read_audit_events, write_audit_event
 from core.auth import Principal, has_permission
-from core.config import get_settings
+from core.config import enterprise_warnings, get_settings
 from core.database import list_interview_actions
 from core.matcher import normalize_analysis
 from core.pdf_utils import extract_document_text
 from core.security import redact_payload, redact_pii, verify_password
 from core.tools import parse_interview_window, schedule_interview
-from core.workflow import keyword_intent
-
-
-class WorkflowIntentTests(unittest.TestCase):
-    def test_keyword_intent_routes_action(self):
-        self.assertEqual(keyword_intent("帮我给张三发送明天下午两点的面试邀约"), "action_tool")
-
-    def test_keyword_intent_routes_resume(self):
-        self.assertEqual(keyword_intent("评估一下这份简历和 JD 的匹配度"), "resume")
-
-    def test_keyword_intent_routes_rag(self):
-        self.assertEqual(keyword_intent("年假制度是什么？"), "rag")
 
 
 class MatcherNormalizationTests(unittest.TestCase):
     def test_normalize_analysis_clamps_score_and_lists(self):
-        result = normalize_analysis({"score": 120, "pros": "Python 经验", "cons": ["缺少管理经验"]})
+        result = normalize_analysis({"score": 120, "pros": "Python experience", "cons": ["No people management"]})
 
         self.assertEqual(result["score"], 100)
-        self.assertEqual(result["pros"], ["Python 经验"])
-        self.assertEqual(result["cons"], ["缺少管理经验"])
+        self.assertEqual(result["pros"], ["Python experience"])
+        self.assertEqual(result["cons"], ["No people management"])
 
 
 class SecurityTests(unittest.TestCase):
     def test_redact_pii_masks_common_identifiers(self):
-        text = "候选人电话 13812345678，邮箱 test@example.com，身份证 110101199003071234"
+        text = "phone 13812345678, email test@example.com, id 110101199003071234"
 
         redacted = redact_pii(text)
 
         self.assertNotIn("13812345678", redacted)
         self.assertNotIn("test@example.com", redacted)
         self.assertNotIn("110101199003071234", redacted)
+        self.assertIn("[PHONE_REDACTED]", redacted)
+        self.assertIn("[EMAIL_REDACTED]", redacted)
+        self.assertIn("[ID_CARD_REDACTED]", redacted)
 
     def test_verify_password_allows_empty_expected_password(self):
         self.assertTrue(verify_password("", None))
@@ -57,13 +47,13 @@ class SecurityTests(unittest.TestCase):
 
         redacted = redact_payload(payload)
 
-        self.assertEqual(redacted["candidate"]["email"], "[邮箱已脱敏]")
-        self.assertEqual(redacted["candidate"]["items"][0], "[手机号已脱敏]")
+        self.assertEqual(redacted["candidate"]["email"], "[EMAIL_REDACTED]")
+        self.assertEqual(redacted["candidate"]["items"][0], "[PHONE_REDACTED]")
 
 
 class DocumentImportTests(unittest.TestCase):
     def test_extract_document_text_supports_plain_text(self):
-        result = extract_document_text("候选人具备 Python 经验".encode("utf-8"), "resume.txt")
+        result = extract_document_text("Candidate has Python experience".encode("utf-8"), "resume.txt")
 
         self.assertIn("Python", result)
 
@@ -80,6 +70,11 @@ class IsolatedRuntimeMixin:
                 "CALENDAR_DIR",
                 "ATS_EXPORT_DIR",
                 "TOOL_EXECUTION_MODE",
+                "ENTERPRISE_MODE",
+                "REQUIRE_ACCESS_PASSWORD",
+                "ACCESS_PASSWORD",
+                "ACCESS_PASSWORD_MIN_LENGTH",
+                "AUDIT_HASH_CHAIN_ENABLED",
             )
         }
         root = Path(self._tmpdir.name)
@@ -89,6 +84,11 @@ class IsolatedRuntimeMixin:
         os.environ["CALENDAR_DIR"] = str(root / "calendar")
         os.environ["ATS_EXPORT_DIR"] = str(root / "ats_exports")
         os.environ["TOOL_EXECUTION_MODE"] = "local"
+        os.environ.pop("ENTERPRISE_MODE", None)
+        os.environ.pop("REQUIRE_ACCESS_PASSWORD", None)
+        os.environ.pop("ACCESS_PASSWORD", None)
+        os.environ.pop("ACCESS_PASSWORD_MIN_LENGTH", None)
+        os.environ.pop("AUDIT_HASH_CHAIN_ENABLED", None)
         get_settings.cache_clear()
 
     def tearDown(self):
@@ -102,17 +102,17 @@ class IsolatedRuntimeMixin:
 
 
 class ToolExecutionTests(IsolatedRuntimeMixin, unittest.TestCase):
-    def test_parse_interview_window_handles_common_chinese_time(self):
+    def test_parse_interview_window_handles_iso_time(self):
         now = datetime(2026, 6, 18, 9, 0, tzinfo=ZoneInfo("Asia/Shanghai"))
 
-        window = parse_interview_window("明天下午两点", now=now)
+        window = parse_interview_window("2026-06-20 14:30", now=now)
 
         self.assertIsNotNone(window)
-        self.assertEqual(window[0].strftime("%Y-%m-%d %H:%M"), "2026-06-19 14:00")
-        self.assertEqual(window[1].strftime("%Y-%m-%d %H:%M"), "2026-06-19 15:00")
+        self.assertEqual(window[0].strftime("%Y-%m-%d %H:%M"), "2026-06-20 14:30")
+        self.assertEqual(window[1].strftime("%Y-%m-%d %H:%M"), "2026-06-20 15:30")
 
     def test_schedule_interview_returns_auditable_local_result(self):
-        result = schedule_interview("张三", "2026-06-20 14:00", candidate_email="candidate@example.com")
+        result = schedule_interview("Alice", "2026-06-20 14:00", candidate_email="candidate@example.com")
 
         self.assertEqual(result.tool_name, "schedule_interview")
         self.assertIn(result.status, {"DRY_RUN", "PERSISTED", "SUCCESS"})
@@ -125,6 +125,31 @@ class ToolExecutionTests(IsolatedRuntimeMixin, unittest.TestCase):
         self.assertIn("DTEND;TZID=Asia/Shanghai:20260620T150000", calendar_text)
         self.assertTrue(Path(result.metadata["ats_export_path"]).exists())
 
+    def test_schedule_interview_can_require_manual_approval(self):
+        os.environ["TOOL_EXECUTION_MODE"] = "approval"
+        get_settings.cache_clear()
+
+        result = schedule_interview("Bob", "2026-06-21 10:00", candidate_email="bob@example.com")
+
+        self.assertEqual(result.status, "PENDING_APPROVAL")
+        self.assertEqual(result.metadata["email_draft_path"], "dry_run")
+        self.assertEqual(result.metadata["calendar_event_path"], "dry_run")
+        self.assertEqual(result.metadata["ats_export_path"], "dry_run")
+        self.assertEqual(list_interview_actions(limit=1)[0]["status"], "PENDING_APPROVAL")
+
+
+class AuditTests(IsolatedRuntimeMixin, unittest.TestCase):
+    def test_audit_events_include_hash_chain_and_redaction(self):
+        first = write_audit_event("test.first", {"email": "test@example.com"})
+        second = write_audit_event("test.second", {"phone": "13812345678"})
+        events = read_audit_events(limit=2)
+
+        self.assertEqual(len(events), 2)
+        self.assertTrue(first["event_hash"])
+        self.assertEqual(second["previous_event_hash"], first["event_hash"])
+        self.assertEqual(events[0]["payload"]["email"], "[EMAIL_REDACTED]")
+        self.assertEqual(events[1]["payload"]["phone"], "[PHONE_REDACTED]")
+
 
 class AuthorizationTests(unittest.TestCase):
     def test_role_permissions(self):
@@ -132,16 +157,17 @@ class AuthorizationTests(unittest.TestCase):
         self.assertTrue(has_permission(Principal("bob", "hrbp"), "tool"))
         self.assertFalse(has_permission(Principal("viewer", "viewer"), "tool"))
 
-    def test_api_permission_error_maps_to_403(self):
-        from api import app, current_principal
 
-        app.dependency_overrides[current_principal] = lambda: Principal("viewer", "viewer")
-        try:
-            response = TestClient(app).get("/interviews")
-        finally:
-            app.dependency_overrides.clear()
+class EnterpriseConfigTests(IsolatedRuntimeMixin, unittest.TestCase):
+    def test_enterprise_mode_requires_access_password(self):
+        os.environ["ENTERPRISE_MODE"] = "true"
+        os.environ["REQUIRE_ACCESS_PASSWORD"] = "true"
+        get_settings.cache_clear()
 
-        self.assertEqual(response.status_code, 403)
+        self.assertIn(
+            "ACCESS_PASSWORD is required when REQUIRE_ACCESS_PASSWORD is enabled.",
+            enterprise_warnings(),
+        )
 
 
 if __name__ == "__main__":

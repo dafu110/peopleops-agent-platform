@@ -13,9 +13,9 @@ def redact_pii(text: str) -> str:
     if not text:
         return ""
 
-    redacted = PHONE_RE.sub("[手机号已脱敏]", text)
-    redacted = EMAIL_RE.sub("[邮箱已脱敏]", redacted)
-    redacted = ID_CARD_RE.sub("[身份证号已脱敏]", redacted)
+    redacted = PHONE_RE.sub("[PHONE_REDACTED]", text)
+    redacted = EMAIL_RE.sub("[EMAIL_REDACTED]", redacted)
+    redacted = ID_CARD_RE.sub("[ID_CARD_REDACTED]", redacted)
     return redacted
 
 

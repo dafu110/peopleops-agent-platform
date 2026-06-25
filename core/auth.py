@@ -31,7 +31,7 @@ def has_permission(principal: Principal, permission: str) -> bool:
 
 def require_permission(principal: Principal, permission: str) -> None:
     if not has_permission(principal, permission):
-        raise PermissionError(f"用户 {principal.username} 缺少权限：{permission}")
+        raise PermissionError(f"User {principal.username} lacks permission: {permission}")
 
 
 def allowed_permissions(role: str) -> Iterable[str]:

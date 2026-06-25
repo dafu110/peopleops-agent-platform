@@ -231,7 +231,9 @@ def schedule_interview(
     smtp_status = "not_attempted"
     status = "DRY_RUN"
 
-    if mode in {"local", "live"}:
+    if mode in {"approval", "pending_approval"}:
+        status = "PENDING_APPROVAL"
+    elif mode in {"local", "live"}:
         email_draft_path = _write_email_draft(candidate_name, interview_time, candidate_email)
         calendar_event_path = _write_calendar_event(candidate_name, interview_time)
         status = "PERSISTED"

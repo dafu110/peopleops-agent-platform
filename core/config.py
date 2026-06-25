@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -26,11 +25,15 @@ class Settings:
     calendar_dir: Path
     ats_export_dir: Path
     access_password: Optional[str]
+    enterprise_mode: bool
+    require_access_password: bool
+    access_password_min_length: int
     tool_execution_mode: str
     rag_chunk_size: int
     rag_chunk_overlap: int
     rag_top_k: int
     audit_log_max_bytes: int
+    audit_hash_chain_enabled: bool
     smtp_host: Optional[str]
     smtp_port: int
     smtp_username: Optional[str]
@@ -58,6 +61,10 @@ def _int_env(name: str, default: int) -> int:
     value = os.getenv(name)
     if not value:
         return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
 
 
 def _bool_env(name: str, default: bool) -> bool:
@@ -67,10 +74,21 @@ def _bool_env(name: str, default: bool) -> bool:
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
-    try:
-        return int(value)
-    except ValueError:
-        return default
+
+
+def enterprise_warnings(settings: Settings | None = None) -> list[str]:
+    settings = settings or get_settings()
+    warnings: list[str] = []
+    if settings.require_access_password and not settings.access_password:
+        warnings.append("ACCESS_PASSWORD is required when REQUIRE_ACCESS_PASSWORD is enabled.")
+    if settings.access_password and not settings.access_password.startswith("sha256:"):
+        if len(settings.access_password) < settings.access_password_min_length:
+            warnings.append("ACCESS_PASSWORD is shorter than ACCESS_PASSWORD_MIN_LENGTH.")
+    if settings.enterprise_mode and settings.tool_execution_mode == "live" and not settings.smtp_host:
+        warnings.append("SMTP_HOST should be configured before enabling live tool execution.")
+    if settings.enterprise_mode and not settings.audit_hash_chain_enabled:
+        warnings.append("AUDIT_HASH_CHAIN_ENABLED should stay enabled in enterprise mode.")
+    return warnings
 
 
 @lru_cache(maxsize=1)
@@ -78,6 +96,7 @@ def get_settings() -> Settings:
     import os
 
     load_dotenv()
+    enterprise_mode = _bool_env("ENTERPRISE_MODE", False)
 
     return Settings(
         app_name=os.getenv("APP_NAME", "PeopleOps Agent Platform"),
@@ -85,7 +104,7 @@ def get_settings() -> Settings:
         api_base=os.getenv("OPENAI_API_BASE"),
         chat_model=os.getenv("OPENAI_MODEL", "deepseek-chat"),
         embedding_model=os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5"),
-        policy_pdf_path=_path_env("HR_POLICY_PDF", "data/员工手册测试版.pdf"),
+        policy_pdf_path=_path_env("HR_POLICY_PDF", "data/\u5458\u5de5\u624b\u518c\u6d4b\u8bd5\u7248.pdf"),
         chroma_persist_dir=_path_env("CHROMA_PERSIST_DIR", ".chroma/policy"),
         rag_manifest_path=_path_env("RAG_MANIFEST_PATH", ".chroma/policy/manifest.json"),
         db_path=_path_env("APP_DB_PATH", ".runtime/peopleops.sqlite3"),
@@ -94,11 +113,15 @@ def get_settings() -> Settings:
         calendar_dir=_path_env("CALENDAR_DIR", ".runtime/calendar"),
         ats_export_dir=_path_env("ATS_EXPORT_DIR", ".runtime/ats_exports"),
         access_password=os.getenv("ACCESS_PASSWORD"),
-        tool_execution_mode=os.getenv("TOOL_EXECUTION_MODE", "local"),
+        enterprise_mode=enterprise_mode,
+        require_access_password=_bool_env("REQUIRE_ACCESS_PASSWORD", enterprise_mode),
+        access_password_min_length=_int_env("ACCESS_PASSWORD_MIN_LENGTH", 12),
+        tool_execution_mode=os.getenv("TOOL_EXECUTION_MODE", "local").strip().lower(),
         rag_chunk_size=_int_env("RAG_CHUNK_SIZE", 400),
         rag_chunk_overlap=_int_env("RAG_CHUNK_OVERLAP", 40),
         rag_top_k=_int_env("RAG_TOP_K", 3),
         audit_log_max_bytes=_int_env("AUDIT_LOG_MAX_BYTES", 5_000_000),
+        audit_hash_chain_enabled=_bool_env("AUDIT_HASH_CHAIN_ENABLED", True),
         smtp_host=os.getenv("SMTP_HOST"),
         smtp_port=_int_env("SMTP_PORT", 587),
         smtp_username=os.getenv("SMTP_USERNAME"),
@@ -108,10 +131,12 @@ def get_settings() -> Settings:
     )
 
 
-def get_chat_model(*, temperature: float = 0.0) -> ChatOpenAI:
+def get_chat_model(*, temperature: float = 0.0):
+    from langchain_openai import ChatOpenAI
+
     settings = get_settings()
     if not settings.has_llm_config:
-        raise RuntimeError("缺少 OPENAI_API_KEY 或 OPENAI_API_BASE，请先配置 .env。")
+        raise RuntimeError("Missing OPENAI_API_KEY or OPENAI_API_BASE. Configure .env first.")
 
     return ChatOpenAI(
         model=settings.chat_model,
