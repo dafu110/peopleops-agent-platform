@@ -1,4 +1,5 @@
 import os
+import importlib
 import tempfile
 import unittest
 from datetime import datetime
@@ -156,6 +157,38 @@ class AuthorizationTests(unittest.TestCase):
         self.assertTrue(has_permission(Principal("alice", "admin"), "users"))
         self.assertTrue(has_permission(Principal("bob", "hrbp"), "tool"))
         self.assertFalse(has_permission(Principal("viewer", "viewer"), "tool"))
+
+
+class ApiControlPlaneTests(IsolatedRuntimeMixin, unittest.TestCase):
+    def test_health_and_audit_endpoints_do_not_require_agent_runtime(self):
+        from fastapi.testclient import TestClient
+        import api
+
+        api = importlib.reload(api)
+        client = TestClient(api.app)
+
+        health = client.get("/health")
+        self.assertEqual(health.status_code, 200)
+        self.assertEqual(health.json()["status"], "ok")
+
+        audit = client.get("/audit/events")
+        self.assertEqual(audit.status_code, 200)
+        self.assertEqual(audit.json(), [])
+
+    def test_chat_returns_service_error_when_agent_runtime_is_missing(self):
+        from fastapi import HTTPException
+        from fastapi.testclient import TestClient
+        import api
+
+        api = importlib.reload(api)
+        original_get_agent_app = api.get_agent_app
+        api.get_agent_app = lambda: (_ for _ in ()).throw(HTTPException(status_code=503, detail="Agent runtime unavailable"))
+        try:
+            response = TestClient(api.app).post("/chat", json={"message": "hello"})
+        finally:
+            api.get_agent_app = original_get_agent_app
+
+        self.assertEqual(response.status_code, 503)
 
 
 class EnterpriseConfigTests(IsolatedRuntimeMixin, unittest.TestCase):

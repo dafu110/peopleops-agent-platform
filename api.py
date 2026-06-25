@@ -11,7 +11,6 @@ from core.auth import Principal, allowed_permissions, authenticate_with_password
 from core.audit import clear_audit_context, read_audit_events, set_audit_context, write_audit_event
 from core.config import enterprise_warnings, get_settings
 from core.database import init_db, list_interview_actions
-from core.workflow import agent_app
 
 
 settings = get_settings()
@@ -50,6 +49,17 @@ class ChatResponse(BaseModel):
     reply: str
     intent: str
     thread_id: str
+
+
+def get_agent_app():
+    try:
+        from core.workflow import agent_app
+    except ModuleNotFoundError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Agent runtime dependency is not installed: {exc.name}",
+        ) from exc
+    return agent_app
 
 
 def current_principal(x_access_password: Optional[str] = Header(default=None)) -> Principal:
@@ -105,7 +115,7 @@ def chat(request: ChatRequest, principal: Principal = Depends(current_principal)
         "reply": "",
         "history": request.history,
     }
-    output = agent_app.invoke(inputs, {"configurable": {"thread_id": thread_id}})
+    output = get_agent_app().invoke(inputs, {"configurable": {"thread_id": thread_id}})
     write_audit_event(
         "api.chat",
         {
