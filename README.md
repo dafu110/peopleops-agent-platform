@@ -2,13 +2,15 @@
 
 PeopleOps Agent Platform is an AI-native HRBP workbench for policy Q&A, resume/JD matching, interview actions, approvals, audit evidence, and local ATS-style records. It is designed as a practical reference project rather than a single-purpose RAG demo.
 
-The Streamlit workbench now follows an orange operations-console visual system and a closed-loop workflow:
+The Streamlit workbench follows an Enterprise Console design system: white surfaces, fine borders, compact metrics, dense evidence rows, and a closed-loop workflow:
 
 ```text
 Assemble context -> Agent judgment -> Execute action -> Governance evidence
 ```
 
-![PeopleOps orange closed-loop workbench](docs/screenshots/peopleops-workbench-orange.png)
+![PeopleOps enterprise console overview](docs/screenshots/peopleops-enterprise-console-overview.png)
+
+![PeopleOps governance evidence console](docs/screenshots/peopleops-enterprise-console-governance.png)
 
 ## Product Experience
 
@@ -19,7 +21,7 @@ The app is organized around the daily flow of an HR operator.
 - **Execute action**: create local interview actions, email drafts, calendar artifacts, approval requests, and ATS sync payloads.
 - **Governance evidence**: review recent actions, pending approvals, audit events, connector readiness, and audit-chain integrity.
 
-The UI uses a consistent orange palette, compact status pills, workflow cards, a closed-loop rail, operational metrics, and ledger-style evidence rows so the first screen explains both the product and the control model.
+The UI uses a restrained enterprise palette, compact status pills, workflow cards, a closed-loop rail, operational metrics, and ledger-style evidence rows so the first screen explains both the product and the control model.
 
 ## Core Capabilities
 
@@ -57,7 +59,7 @@ Engineering services
 
 | Path | Purpose |
 | --- | --- |
-| `app.py` | Streamlit workbench and orange closed-loop UI. |
+| `app.py` | Streamlit workbench and Enterprise Console closed-loop UI. |
 | `api.py` | FastAPI control plane for chat, identity, readiness, interviews, approvals, connectors, and audit data. |
 | `core/` | Agent workflow, RAG, matcher, security, audit, tenancy, database, connectors, and tool execution modules. |
 | `data/` | Sample HR policy, resume, and JD documents used by the demo. |
@@ -161,10 +163,3 @@ When `REQUIRE_ACCESS_PASSWORD=true`, the API refuses authenticated operations un
 ```powershell
 docker compose up --build
 ```
-
-## Repository Housekeeping
-
-- The README references the current orange workbench screenshot at `docs/screenshots/peopleops-workbench-orange.png`.
-- Older walkthrough screenshots were removed after the UI refresh to avoid documenting stale visuals.
-- Python cache directories such as `__pycache__/` are ignored and should not be committed.
-- No duplicate project files were found outside Git metadata and generated caches during the latest cleanup pass.

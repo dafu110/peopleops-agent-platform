@@ -20,40 +20,35 @@ st.markdown(
     """
     <style>
     :root {
-        --po-ink: #271406;
-        --po-muted: #76533b;
-        --po-soft: #9a6b48;
-        --po-line: #f0c9a8;
-        --po-paper: #fff7ed;
-        --po-panel: #fffaf5;
-        --po-panel-strong: #fff3e4;
-        --po-orange: #f97316;
-        --po-orange-dark: #c2410c;
-        --po-orange-deep: #7c2d12;
+        --po-ink: #171717;
+        --po-muted: #6b7280;
+        --po-soft: #9ca3af;
+        --po-line: #e5e7eb;
+        --po-paper: #f8fafc;
+        --po-panel: #ffffff;
+        --po-panel-strong: #f9fafb;
+        --po-accent: #2563eb;
+        --po-accent-soft: #eff6ff;
+        --po-accent-line: #bfdbfe;
         --po-amber: #b45309;
         --po-green: #0f766e;
-        --po-blue: #a14d0b;
+        --po-blue: #1d4ed8;
         --po-red: #b42318;
-        --po-shadow: 0 18px 44px rgba(124, 45, 18, 0.13);
-        --po-radius: 8px;
+        --po-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        --po-radius: 6px;
     }
 
     .stApp {
-        background:
-            radial-gradient(circle at 20% 0%, rgba(249,115,22,0.16), transparent 30%),
-            linear-gradient(90deg, rgba(249,115,22,0.045) 1px, transparent 1px),
-            linear-gradient(180deg, rgba(249,115,22,0.045) 1px, transparent 1px),
-            var(--po-paper);
-        background-size: 28px 28px;
+        background: var(--po-paper);
         color: var(--po-ink);
     }
     .block-container {
-        max-width: 1320px;
-        padding-top: 1.25rem;
-        padding-bottom: 2.25rem;
+        max-width: 1380px;
+        padding-top: 1rem;
+        padding-bottom: 1.75rem;
     }
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #fff3e4 0%, #fffaf5 56%, #ffedd5 100%);
+        background: #ffffff;
         border-right: 1px solid var(--po-line);
     }
     section[data-testid="stSidebar"] > div {
@@ -64,56 +59,55 @@ st.markdown(
         color: var(--po-ink);
     }
     div[data-testid="stMetric"] {
-        background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(255,237,213,0.86));
+        background: #ffffff;
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        padding: 14px 16px;
-        box-shadow: 0 10px 24px rgba(124, 45, 18, 0.08);
+        padding: 10px 12px;
+        box-shadow: var(--po-shadow);
     }
     div[data-testid="stMetric"] label {
         color: var(--po-muted);
-        font-size: 0.76rem;
+        font-size: 0.72rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
     div[data-testid="stMetric"] [data-testid="stMetricValue"] {
-        color: var(--po-orange-deep);
+        color: var(--po-ink);
         font-weight: 760;
+        font-size: 1.2rem;
     }
     .po-topline {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 18px;
-        padding: 18px 20px;
-        margin-bottom: 18px;
+        gap: 16px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background:
-            linear-gradient(135deg, rgba(255,247,237,0.98), rgba(255,237,213,0.92)),
-            var(--po-panel);
+        background: #ffffff;
         box-shadow: var(--po-shadow);
     }
     .po-kicker {
-        color: var(--po-orange-dark);
-        font-size: 12px;
+        color: var(--po-muted);
+        font-size: 11px;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.11em;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
     }
     .po-title {
         margin: 0;
-        font-size: clamp(28px, 4vw, 46px);
-        line-height: 1;
-        font-weight: 860;
+        font-size: clamp(24px, 3vw, 34px);
+        line-height: 1.05;
+        font-weight: 780;
     }
     .po-subtitle {
-        margin-top: 10px;
-        max-width: 760px;
+        margin-top: 8px;
+        max-width: 820px;
         color: var(--po-muted);
-        font-size: 15px;
+        font-size: 13px;
     }
     .po-status-stack {
         display: grid;
@@ -124,23 +118,23 @@ st.markdown(
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 34px;
-        padding: 7px 12px;
-        border-radius: 999px;
+        min-height: 28px;
+        padding: 5px 9px;
+        border-radius: var(--po-radius);
         border: 1px solid var(--po-line);
-        background: #fffaf5;
-        color: var(--po-orange-deep);
+        background: #ffffff;
+        color: var(--po-ink);
         font-size: 12px;
         font-weight: 760;
         white-space: nowrap;
     }
     .po-pill.green { color: var(--po-green); border-color: rgba(15,118,110,0.28); background: #ecfdf5; }
-    .po-pill.amber { color: var(--po-amber); border-color: rgba(249,115,22,0.34); background: #ffedd5; }
-    .po-pill.blue { color: var(--po-orange-dark); border-color: rgba(194,65,12,0.28); background: #fff7ed; }
+    .po-pill.amber { color: var(--po-amber); border-color: #fde68a; background: #fffbeb; }
+    .po-pill.blue { color: var(--po-blue); border-color: var(--po-accent-line); background: var(--po-accent-soft); }
     .po-section {
-        margin: 18px 0 10px;
-        color: var(--po-orange-dark);
-        font-size: 12px;
+        margin: 14px 0 8px;
+        color: var(--po-muted);
+        font-size: 11px;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -148,15 +142,15 @@ st.markdown(
     .po-panel {
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: rgba(255,250,245,0.94);
-        padding: 16px;
-        box-shadow: 0 10px 26px rgba(124, 45, 18, 0.07);
+        background: #ffffff;
+        padding: 12px;
+        box-shadow: var(--po-shadow);
     }
     .po-panel-title {
-        margin: 0 0 6px;
-        color: var(--po-orange-deep);
+        margin: 0 0 4px;
+        color: var(--po-ink);
         font-weight: 820;
-        font-size: 17px;
+        font-size: 14px;
     }
     .po-panel-copy {
         margin: 0;
@@ -166,50 +160,52 @@ st.markdown(
     .po-loop-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
-        margin: 14px 0 8px;
+        gap: 8px;
+        margin: 10px 0 8px;
     }
     .po-loop-rail {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 10px;
+        gap: 6px;
         align-items: center;
-        margin: 8px 0 14px;
-        padding: 10px;
-        border: 1px solid rgba(240,201,168,0.86);
+        margin: 8px 0 10px;
+        padding: 6px;
+        border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: rgba(255,250,245,0.72);
+        background: var(--po-panel-strong);
     }
     .po-rail-item {
-        min-height: 42px;
+        min-height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: var(--po-radius);
-        background: #ffedd5;
-        color: var(--po-orange-deep);
+        border: 1px solid var(--po-line);
+        background: #ffffff;
+        color: var(--po-muted);
         font-size: 12px;
         font-weight: 820;
         text-align: center;
     }
     .po-rail-item.ready {
-        background: var(--po-orange);
-        color: #fffaf5;
+        border-color: var(--po-accent-line);
+        background: var(--po-accent-soft);
+        color: var(--po-blue);
     }
     .po-step {
-        min-height: 128px;
+        min-height: 112px;
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(255,237,213,0.7));
-        padding: 14px;
-        box-shadow: 0 10px 24px rgba(124, 45, 18, 0.08);
+        background: #ffffff;
+        padding: 12px;
+        box-shadow: var(--po-shadow);
     }
     .po-step-top {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        margin-bottom: 11px;
+        margin-bottom: 9px;
     }
     .po-step-index {
         display: inline-flex;
@@ -217,9 +213,10 @@ st.markdown(
         justify-content: center;
         width: 26px;
         height: 26px;
-        border-radius: 999px;
-        background: var(--po-orange);
-        color: #fffaf5;
+        border-radius: var(--po-radius);
+        border: 1px solid var(--po-line);
+        background: var(--po-panel-strong);
+        color: var(--po-muted);
         font-size: 12px;
         font-weight: 820;
     }
@@ -231,11 +228,11 @@ st.markdown(
     }
     .po-step-state.green { color: var(--po-green); }
     .po-step-state.amber { color: var(--po-amber); }
-    .po-step-state.blue { color: var(--po-orange-dark); }
+    .po-step-state.blue { color: var(--po-blue); }
     .po-step-title {
-        margin: 0 0 7px;
-        color: var(--po-orange-deep);
-        font-size: 15px;
+        margin: 0 0 6px;
+        color: var(--po-ink);
+        font-size: 14px;
         font-weight: 820;
     }
     .po-step-copy {
@@ -245,12 +242,15 @@ st.markdown(
         line-height: 1.45;
     }
     .po-next-action {
-        margin: 10px 0 18px;
-        border-left: 4px solid var(--po-orange);
+        margin: 8px 0 14px;
+        border-left: 3px solid var(--po-accent);
         border-radius: var(--po-radius);
-        background: linear-gradient(90deg, rgba(255,237,213,0.96), rgba(255,250,245,0.9));
-        padding: 13px 15px;
-        box-shadow: 0 10px 24px rgba(124, 45, 18, 0.06);
+        border-top: 1px solid var(--po-line);
+        border-right: 1px solid var(--po-line);
+        border-bottom: 1px solid var(--po-line);
+        background: #ffffff;
+        padding: 10px 12px;
+        box-shadow: var(--po-shadow);
     }
     .po-next-action strong {
         display: block;
@@ -265,19 +265,19 @@ st.markdown(
     .po-evidence-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
+        gap: 8px;
         margin: 8px 0 14px;
     }
     .po-evidence-item {
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(255,237,213,0.72));
-        padding: 14px;
-        box-shadow: 0 8px 20px rgba(124, 45, 18, 0.07);
+        background: #ffffff;
+        padding: 12px;
+        box-shadow: var(--po-shadow);
     }
     .po-evidence-value {
-        color: var(--po-orange-dark);
-        font-size: 24px;
+        color: var(--po-ink);
+        font-size: 22px;
         line-height: 1;
         font-weight: 840;
     }
@@ -293,9 +293,9 @@ st.markdown(
         display: grid;
         grid-template-columns: 72px minmax(0, 1fr);
         gap: 10px;
-        padding: 9px 0;
-        border-bottom: 1px solid rgba(240,201,168,0.76);
-        font-size: 13px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--po-line);
+        font-size: 12px;
     }
     .po-ledger-row:last-child { border-bottom: 0; }
     .po-ledger-key { color: var(--po-muted); font-weight: 760; }
@@ -305,24 +305,24 @@ st.markdown(
         border: 1px dashed var(--po-line);
         border-radius: var(--po-radius);
         color: var(--po-muted);
-        background: rgba(255,247,237,0.72);
+        background: var(--po-panel-strong);
         font-size: 13px;
     }
     .stChatMessage {
-        border: 1px solid rgba(240,201,168,0.78);
+        border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: rgba(255,250,245,0.92);
+        background: #ffffff;
     }
     .stTextInput input, .stTextArea textarea {
         border-radius: var(--po-radius);
         border-color: var(--po-line);
-        background: #fffaf5;
+        background: #ffffff;
     }
     .stButton button {
         border-radius: var(--po-radius);
         font-weight: 760;
-        border-color: var(--po-orange);
-        color: var(--po-orange-deep);
+        border-color: var(--po-line);
+        color: var(--po-ink);
     }
     [data-testid="stDeployButton"] {
         display: none;
