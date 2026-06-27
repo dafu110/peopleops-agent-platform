@@ -16,7 +16,6 @@ Useful endpoints:
 
 - `GET /health`
 - `GET /readiness`
-- `GET /enterprise/scorecard`
 - `GET /me`
 - `POST /chat`
 - `GET /interviews`
@@ -50,7 +49,7 @@ Runtime state is mounted into:
 - Replace local Chroma with pgvector, Qdrant, Milvus, Elasticsearch/OpenSearch, or a managed vector/search service and set `VECTOR_BACKEND` accordingly.
 - Move resumes, JD files, generated artifacts, and audit exports to S3, MinIO, OSS, or managed object storage via `OBJECT_STORAGE_URI`.
 - Set real `DEFAULT_TENANT_ID`, `DEFAULT_ORG_ID`, and `DEFAULT_DEPARTMENT_ID`; do not use `default` in enterprise mode.
-- Keep `TOOL_EXECUTION_MODE=approval` for interview invites, rejection drafts, offer drafts, calendar invites, and ATS stage changes until an HR reviewer approves `/approvals` entries.
+- Keep `TOOL_EXECUTION_MODE=approval` for candidate follow-up messages, rejection drafts, offer drafts, calendar invites, and ATS stage changes until an HR reviewer approves `/approvals` entries.
 - Use `/connectors` to track Workday, BambooHR, Greenhouse, Lever, Feishu, DingTalk, Enterprise WeChat, Outlook, and Google Calendar readiness.
 - Persist `.runtime` and `.chroma` only for local reference deployments.
 - Rotate audit logs.

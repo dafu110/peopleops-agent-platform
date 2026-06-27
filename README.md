@@ -1,6 +1,6 @@
 # PeopleOps Agent Platform
 
-PeopleOps Agent Platform is an AI-native HRBP workbench for policy Q&A, resume/JD matching, interview actions, approvals, audit evidence, and local ATS-style records. It is designed as a practical reference project rather than a single-purpose RAG demo.
+PeopleOps Agent Platform is an AI-native HRBP workbench for policy Q&A, resume/JD matching, candidate follow-up actions, approvals, audit evidence, and local ATS-style records. It is designed as a practical reference project rather than a single-purpose RAG demo.
 
 The Streamlit workbench follows an Enterprise Console design system: white surfaces, fine borders, compact metrics, dense evidence rows, and a closed-loop workflow:
 
@@ -18,7 +18,7 @@ The app is organized around the daily flow of an HR operator.
 
 - **Assemble context**: upload candidate resumes, paste the JD, preview extracted resume text, and check runtime readiness.
 - **Agent judgment**: route questions to policy RAG, resume/JD matching, or action tools through the LangGraph workflow.
-- **Execute action**: create local interview actions, email drafts, calendar artifacts, approval requests, and ATS sync payloads.
+- **Execute action**: create local candidate follow-up actions, email drafts, calendar artifacts, approval requests, and ATS sync payloads.
 - **Governance evidence**: review recent actions, pending approvals, audit events, connector readiness, and audit-chain integrity.
 
 The UI uses a restrained enterprise palette, compact status pills, workflow cards, a closed-loop rail, operational metrics, and ledger-style evidence rows so the first screen explains both the product and the control model.
@@ -27,11 +27,11 @@ The UI uses a restrained enterprise palette, compact status pills, workflow card
 
 - AI agent workflow in `core/workflow.py` with intent routing for RAG, resume analysis, and tool execution.
 - Enterprise policy retrieval in `core/rag_engine.py` with persistent Chroma indexing and page-aware citations.
-- Resume/JD matching in `core/matcher.py` with structured `score`, `pros`, and `cons` output.
-- Local tool execution in `core/tools.py` for interview scheduling, email drafts, calendar `.ics` files, ATS exports, and approval gates.
-- SQLite persistence in `core/database.py` for users, interview actions, approval requests, tenant scope, and RAG eval metrics.
+- Resume/JD matching in `core/matcher.py` with structured fit analysis output.
+- Local tool execution in `core/tools.py` for candidate follow-up scheduling, email drafts, calendar `.ics` files, ATS exports, and approval gates.
+- SQLite persistence in `core/database.py` for users, action records, approval requests, tenant scope, and RAG eval metrics.
 - Security and governance foundations: access password support, roles, tenant headers, PII redaction, hash-chained audit logs, and audit integrity checks.
-- FastAPI control plane in `api.py` for health, readiness, identity, chat, interviews, approvals, connectors, and audit endpoints.
+- FastAPI control plane in `api.py` for health, readiness, identity, chat, action records, approvals, connectors, and audit endpoints.
 - Deployment assets: `Dockerfile`, `docker-compose.yml`, `.devcontainer`, and deployment notes under `docs/`.
 
 ## Architecture
@@ -60,7 +60,7 @@ Engineering services
 | Path | Purpose |
 | --- | --- |
 | `app.py` | Streamlit workbench and Enterprise Console closed-loop UI. |
-| `api.py` | FastAPI control plane for chat, identity, readiness, interviews, approvals, connectors, and audit data. |
+| `api.py` | FastAPI control plane for chat, identity, readiness, action records, approvals, connectors, and audit data. |
 | `core/` | Agent workflow, RAG, matcher, security, audit, tenancy, database, connectors, and tool execution modules. |
 | `data/` | Sample HR policy, resume, and JD documents used by the demo. |
 | `docs/` | Deployment notes, clean-install notes, AI coding workflow notes, and product screenshots. |
@@ -92,7 +92,6 @@ Endpoints:
 
 - `GET /health`
 - `GET /readiness`
-- `GET /enterprise/scorecard`
 - `GET /me`
 - `POST /chat`
 - `GET /interviews`
@@ -143,16 +142,16 @@ When `REQUIRE_ACCESS_PASSWORD=true`, the API refuses authenticated operations un
 | `TOOL_EXECUTION_MODE` | `local` | `dry_run`, `approval`, `local`, or `live` |
 | `SMTP_HOST` | empty | SMTP host used only in `live` tool mode |
 | `SMTP_PORT` | `587` | SMTP port |
-| `SMTP_FROM` | `hr@example.com` | Sender for interview invitation email |
+| `SMTP_FROM` | `hr@example.com` | Sender for generated follow-up email |
 
 ## Enterprise Controls
 
 - Set `ENTERPRISE_MODE=true` and `REQUIRE_ACCESS_PASSWORD=true` before exposing the API beyond a local demo.
 - Store `ACCESS_PASSWORD` as `pbkdf2_sha256$...`; plain text and legacy `sha256:` values are accepted for compatibility but reported in readiness warnings.
 - Generate a password hash with `python scripts/hash_password.py`, then paste the output into `.env` as `ACCESS_PASSWORD`.
-- Use `TOOL_EXECUTION_MODE=approval` when interview scheduling should create an auditable pending action instead of immediately generating email, calendar, or ATS artifacts.
-- Use `X-Tenant-ID`, `X-Org-ID`, and `X-Department-ID` on API calls to isolate interviews, approvals, audit context, and downstream ATS payloads.
-- Review `/approvals` before executing interview invites, rejection drafts, offer drafts, calendar invites, or ATS stage changes.
+- Use `TOOL_EXECUTION_MODE=approval` when candidate follow-up actions should create an auditable pending action instead of immediately generating email, calendar, or ATS artifacts.
+- Use `X-Tenant-ID`, `X-Org-ID`, and `X-Department-ID` on API calls to isolate action records, approvals, audit context, and downstream ATS payloads.
+- Review `/approvals` before executing follow-up messages, rejection drafts, offer drafts, calendar invites, or ATS stage changes.
 - Review `/connectors` to see which enterprise HRIS, ATS, collaboration, mail, and calendar integrations are configured or still planned.
 - Use `/audit/events` for recent audit inspection; each record includes a request ID and a hash-chain pointer to make accidental tampering visible.
 - Use `/audit/integrity` to verify the audit hash chain before exporting evidence or closing an incident review.

@@ -20,7 +20,7 @@ jobs:
       - name: Install lightweight test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install fastapi uvicorn python-dotenv pypdf httpx2
+          python -m pip install streamlit fastapi uvicorn python-dotenv pypdf httpx
 
       - name: Compile core modules
         run: |

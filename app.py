@@ -99,7 +99,7 @@ st.markdown(
     }
     .po-title {
         margin: 0;
-        font-size: clamp(24px, 3vw, 34px);
+        font-size: 30px;
         line-height: 1.05;
         font-weight: 780;
     }
@@ -336,6 +336,9 @@ st.markdown(
             width: 100%;
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+        .po-title {
+            font-size: 24px;
+        }
         .po-loop-grid,
         .po-evidence-grid,
         .po-loop-rail {
@@ -437,9 +440,9 @@ def workflow_snapshot(jd_input: str) -> dict:
     elif not has_resume:
         next_action = "JD 已就绪；继续导入简历后即可让 Agent 输出匹配报告。"
     elif not has_jd:
-        next_action = "简历已就绪；补充 JD 后可获得更可信的匹配评分。"
+        next_action = "简历已就绪；补充 JD 后可获得更可信的匹配判断。"
     elif not interviews:
-        next_action = "材料已齐；在下方对话中要求 Agent 做候选人匹配或安排面试。"
+        next_action = "材料已齐；在下方对话中要求 Agent 做候选人匹配或生成候选人跟进动作。"
     elif pending_approvals:
         next_action = "已有待审动作；切到治理证据页查看审批队列和审计链。"
     else:
@@ -460,7 +463,7 @@ def workflow_snapshot(jd_input: str) -> dict:
         },
         {
             "title": "执行动作",
-            "copy": f"{len(interviews)} 条面试动作，{len(pending_approvals)} 条待审请求。",
+            "copy": f"{len(interviews)} 条执行动作，{len(pending_approvals)} 条待审请求。",
             "state": "Active" if interviews or pending_approvals else "Waiting",
             "tone": "green" if interviews else "blue",
         },
@@ -526,9 +529,9 @@ def render_topline() -> None:
         <div class="po-topline">
           <div>
             <div class="po-kicker">HRBP Operations Console</div>
-            <h1 class="po-title">{settings.app_name}</h1>
+            <h1 class="po-title">{escape(settings.app_name)}</h1>
             <div class="po-subtitle">
-              面向企业内部 PeopleOps 的 AI 工作台：把政策问答、候选人匹配、面试动作、审批留痕和审计证据放在同一个操作面。
+              面向企业内部 PeopleOps 的 AI 工作台：把政策问答、候选人匹配、执行动作、审批留痕和审计证据放在同一个操作面。
             </div>
           </div>
           <div class="po-status-stack">
@@ -666,7 +669,7 @@ def render_metrics() -> None:
     with cols[1]:
         st.metric("简历文件", len(st.session_state["resume_file_names"]))
     with cols[2]:
-        st.metric("面试动作", len(interviews))
+        st.metric("执行动作", len(interviews))
     with cols[3]:
         st.metric("待审请求", len([item for item in approvals if item["status"] == "PENDING"]))
     with cols[4]:
@@ -677,7 +680,7 @@ def render_metrics() -> None:
         <div class="po-panel">
           <div class="po-panel-title">Enterprise posture</div>
           <p class="po-panel-copy">
-            Tenant: {settings.default_tenant_id} · DB: {settings.database_backend} · Vector: {settings.vector_backend} ·
+            Tenant: {escape(settings.default_tenant_id)} · DB: {escape(settings.database_backend)} · Vector: {escape(settings.vector_backend)} ·
             Connectors configured: {len(configured_connectors)}/{len(connectors)}
           </p>
         </div>
@@ -712,7 +715,7 @@ def render_governance_summary(snapshot: dict) -> None:
           <p class="po-panel-copy">
             Audit chain: {"valid" if integrity.get("valid") else "needs review"} ·
             Connectors configured: {len(configured_connectors)}/{len(connectors)} ·
-            Tool mode: {settings.tool_execution_mode}
+            Tool mode: {escape(settings.tool_execution_mode)}
           </p>
         </div>
         """,
@@ -755,7 +758,7 @@ def render_activity_panel(snapshot: dict) -> None:
                     unsafe_allow_html=True,
                 )
         else:
-            st.markdown('<div class="po-empty">暂无面试动作。</div>', unsafe_allow_html=True)
+            st.markdown('<div class="po-empty">暂无执行动作。</div>', unsafe_allow_html=True)
 
     with approval_col:
         st.markdown('<div class="po-section">Approval Queue</div>', unsafe_allow_html=True)
@@ -800,7 +803,7 @@ def render_chat(jd_input: str) -> None:
         <div class="po-panel">
           <div class="po-panel-title">从判断到留痕</div>
           <p class="po-panel-copy">
-            在这里发起政策问答、候选人匹配或面试安排。Agent 的用户输入、输出、工具动作和审批结果会回流到治理证据页。
+            在这里发起政策问答、候选人匹配或候选人跟进动作。Agent 的用户输入、输出、工具动作和审批结果会回流到治理证据页。
           </p>
         </div>
         """,

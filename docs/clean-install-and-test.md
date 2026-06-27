@@ -1,6 +1,6 @@
 # Clean Install And Test Evidence
 
-This note records a reproducible local validation flow for PeopleOps Agent Platform. It is intended for interview review, repository QA, and fresh-machine setup.
+This note records a reproducible local validation flow for PeopleOps Agent Platform. It is intended for repository QA, handoff review, and fresh-machine setup.
 
 ## Environment Used For Validation
 
@@ -79,6 +79,6 @@ OK
 - Nested payload redaction.
 - Plain text document import.
 - Interview time parsing for common Chinese time expressions.
-- Local tool execution that writes interview records, `.eml` drafts, `.ics` calendar artifacts, and ATS export payloads.
+- Local tool execution that writes action records, `.eml` drafts, `.ics` calendar artifacts, and ATS export payloads.
 - Role-based permission checks.
 - FastAPI permission mapping to `403`.
