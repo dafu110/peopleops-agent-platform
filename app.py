@@ -20,21 +20,22 @@ st.markdown(
     """
     <style>
     :root {
-        --po-ink: #171717;
-        --po-muted: #6b7280;
-        --po-soft: #9ca3af;
-        --po-line: #e5e7eb;
-        --po-paper: #f8fafc;
+        --po-ink: #111827;
+        --po-muted: #5f6b7a;
+        --po-soft: #94a3b8;
+        --po-line: #d8dee8;
+        --po-paper: #f3f6fb;
         --po-panel: #ffffff;
-        --po-panel-strong: #f9fafb;
-        --po-accent: #2563eb;
-        --po-accent-soft: #eff6ff;
-        --po-accent-line: #bfdbfe;
+        --po-panel-strong: #f8fafc;
+        --po-accent: #1f5eff;
+        --po-accent-soft: #edf4ff;
+        --po-accent-line: #b9d3ff;
         --po-amber: #b45309;
         --po-green: #0f766e;
         --po-blue: #1d4ed8;
         --po-red: #b42318;
-        --po-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        --po-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.035);
+        --po-shadow-soft: 0 1px 1px rgba(15, 23, 42, 0.04);
         --po-radius: 6px;
     }
 
@@ -44,11 +45,19 @@ st.markdown(
     }
     .block-container {
         max-width: 1380px;
-        padding-top: 1rem;
+        padding-top: 2rem;
         padding-bottom: 1.75rem;
     }
+    header[data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stDeployButton"],
+    [data-testid="stAppDeployButton"],
+    #MainMenu {
+        display: none !important;
+    }
     section[data-testid="stSidebar"] {
-        background: #ffffff;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
         border-right: 1px solid var(--po-line);
     }
     section[data-testid="stSidebar"] > div {
@@ -59,7 +68,7 @@ st.markdown(
         color: var(--po-ink);
     }
     div[data-testid="stMetric"] {
-        background: #ffffff;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
         padding: 10px 12px;
@@ -82,11 +91,13 @@ st.markdown(
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding: 14px 16px;
+        padding: 18px 18px;
         margin-bottom: 14px;
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: #ffffff;
+        background:
+            linear-gradient(90deg, rgba(31,94,255,0.08), rgba(15,118,110,0.05) 42%, rgba(255,255,255,0) 70%),
+            #ffffff;
         box-shadow: var(--po-shadow);
     }
     .po-kicker {
@@ -99,9 +110,9 @@ st.markdown(
     }
     .po-title {
         margin: 0;
-        font-size: 30px;
+        font-size: 32px;
         line-height: 1.05;
-        font-weight: 780;
+        font-weight: 820;
     }
     .po-subtitle {
         margin-top: 8px;
@@ -122,7 +133,7 @@ st.markdown(
         padding: 5px 9px;
         border-radius: var(--po-radius);
         border: 1px solid var(--po-line);
-        background: #ffffff;
+        background: rgba(255,255,255,0.88);
         color: var(--po-ink);
         font-size: 12px;
         font-weight: 760;
@@ -142,7 +153,7 @@ st.markdown(
     .po-panel {
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: #ffffff;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
         padding: 12px;
         box-shadow: var(--po-shadow);
     }
@@ -172,7 +183,8 @@ st.markdown(
         padding: 6px;
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: var(--po-panel-strong);
+        background: #eaf1fb;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
     }
     .po-rail-item {
         min-height: 32px;
@@ -189,7 +201,7 @@ st.markdown(
     }
     .po-rail-item.ready {
         border-color: var(--po-accent-line);
-        background: var(--po-accent-soft);
+        background: linear-gradient(180deg, #f8fbff 0%, var(--po-accent-soft) 100%);
         color: var(--po-blue);
     }
     .po-step {
@@ -197,8 +209,9 @@ st.markdown(
         display: flex;
         flex-direction: column;
         border: 1px solid var(--po-line);
+        border-top: 3px solid var(--po-accent-line);
         border-radius: var(--po-radius);
-        background: #ffffff;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
         padding: 12px 12px 13px;
         box-shadow: var(--po-shadow);
         overflow: hidden;
@@ -218,7 +231,7 @@ st.markdown(
         height: 26px;
         border-radius: var(--po-radius);
         border: 1px solid var(--po-line);
-        background: var(--po-panel-strong);
+        background: #f3f6fb;
         color: var(--po-muted);
         font-size: 12px;
         font-weight: 820;
@@ -232,6 +245,9 @@ st.markdown(
     .po-step-state.green { color: var(--po-green); }
     .po-step-state.amber { color: var(--po-amber); }
     .po-step-state.blue { color: var(--po-blue); }
+    .po-step:has(.po-step-state.green) { border-top-color: rgba(15,118,110,0.46); }
+    .po-step:has(.po-step-state.amber) { border-top-color: rgba(180,83,9,0.42); }
+    .po-step:has(.po-step-state.blue) { border-top-color: rgba(29,78,216,0.42); }
     .po-step .po-step-title {
         margin: 6px 0 8px !important;
         color: var(--po-ink);
@@ -248,12 +264,12 @@ st.markdown(
     }
     .po-next-action {
         margin: 10px 0 14px;
-        border-left: 3px solid var(--po-accent);
+        border-left: 4px solid var(--po-accent);
         border-radius: var(--po-radius);
         border-top: 1px solid var(--po-line);
         border-right: 1px solid var(--po-line);
         border-bottom: 1px solid var(--po-line);
-        background: #ffffff;
+        background: linear-gradient(90deg, rgba(31,94,255,0.06), #ffffff 34%);
         padding: 10px 12px;
         box-shadow: var(--po-shadow);
     }
@@ -276,7 +292,7 @@ st.markdown(
     .po-evidence-item {
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: #ffffff;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
         padding: 12px;
         box-shadow: var(--po-shadow);
     }
@@ -310,13 +326,13 @@ st.markdown(
         border: 1px dashed var(--po-line);
         border-radius: var(--po-radius);
         color: var(--po-muted);
-        background: var(--po-panel-strong);
+        background: #f8fafc;
         font-size: 13px;
     }
     .stChatMessage {
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: #ffffff;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
     }
     .stTextInput input, .stTextArea textarea {
         border-radius: var(--po-radius);
