@@ -2,15 +2,15 @@
 
 PeopleOps Agent Platform is an AI-native HRBP workbench for policy Q&A, resume/JD matching, candidate follow-up actions, approvals, audit evidence, and local ATS-style records. It is designed as a practical reference project rather than a single-purpose RAG demo.
 
-The Streamlit workbench follows an Enterprise Console design system: white surfaces, fine borders, compact metrics, dense evidence rows, and a closed-loop workflow:
+The Streamlit workbench follows an Enterprise Console design system: cool gray-blue workspace background, white operational panels, fine borders, compact metrics, status-color edge accents, dense evidence rows, and a closed-loop workflow:
 
 ```text
 Assemble context -> Agent judgment -> Execute action -> Governance evidence
 ```
 
-![PeopleOps enterprise console overview](docs/screenshots/peopleops-enterprise-console-overview.png)
+![Full-page PeopleOps enterprise console overview](docs/screenshots/peopleops-enterprise-console-overview.png)
 
-![PeopleOps governance evidence console](docs/screenshots/peopleops-enterprise-console-governance.png)
+![Full-page PeopleOps governance evidence console](docs/screenshots/peopleops-enterprise-console-governance.png)
 
 ## Product Experience
 
@@ -21,7 +21,7 @@ The app is organized around the daily flow of an HR operator.
 - **Execute action**: create local candidate follow-up actions, email drafts, calendar artifacts, approval requests, and ATS sync payloads.
 - **Governance evidence**: review recent actions, pending approvals, audit events, connector readiness, and audit-chain integrity.
 
-The UI uses a restrained enterprise palette, compact status pills, workflow cards, a closed-loop rail, operational metrics, and ledger-style evidence rows so the first screen explains both the product and the control model.
+The UI uses a restrained enterprise palette with enough contrast to avoid a flat white canvas: a cool gray-blue app surface, lightly tinted top panel, compact status pills, aligned workflow cards, a closed-loop rail, operational metrics, and ledger-style evidence rows. The committed screenshots are full-page captures so the README shows the complete workbench and governance surfaces rather than cropped viewports.
 
 ## Core Capabilities
 
