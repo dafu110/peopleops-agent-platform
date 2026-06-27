@@ -20,23 +20,29 @@ st.markdown(
     """
     <style>
     :root {
-        --po-ink: #17201a;
-        --po-muted: #66736b;
-        --po-line: #d9e2da;
-        --po-paper: #fbfaf4;
-        --po-panel: #ffffff;
-        --po-green: #1f6f4a;
-        --po-blue: #255c99;
-        --po-amber: #a96f18;
-        --po-red: #a33a3a;
-        --po-shadow: 0 18px 42px rgba(33, 43, 36, 0.08);
+        --po-ink: #271406;
+        --po-muted: #76533b;
+        --po-soft: #9a6b48;
+        --po-line: #f0c9a8;
+        --po-paper: #fff7ed;
+        --po-panel: #fffaf5;
+        --po-panel-strong: #fff3e4;
+        --po-orange: #f97316;
+        --po-orange-dark: #c2410c;
+        --po-orange-deep: #7c2d12;
+        --po-amber: #b45309;
+        --po-green: #0f766e;
+        --po-blue: #a14d0b;
+        --po-red: #b42318;
+        --po-shadow: 0 18px 44px rgba(124, 45, 18, 0.13);
         --po-radius: 8px;
     }
 
     .stApp {
         background:
-            linear-gradient(90deg, rgba(23,32,26,0.035) 1px, transparent 1px),
-            linear-gradient(180deg, rgba(23,32,26,0.035) 1px, transparent 1px),
+            radial-gradient(circle at 20% 0%, rgba(249,115,22,0.16), transparent 30%),
+            linear-gradient(90deg, rgba(249,115,22,0.045) 1px, transparent 1px),
+            linear-gradient(180deg, rgba(249,115,22,0.045) 1px, transparent 1px),
             var(--po-paper);
         background-size: 28px 28px;
         color: var(--po-ink);
@@ -47,7 +53,7 @@ st.markdown(
         padding-bottom: 2.25rem;
     }
     section[data-testid="stSidebar"] {
-        background: #f2f0e7;
+        background: linear-gradient(180deg, #fff3e4 0%, #fffaf5 56%, #ffedd5 100%);
         border-right: 1px solid var(--po-line);
     }
     section[data-testid="stSidebar"] > div {
@@ -58,11 +64,11 @@ st.markdown(
         color: var(--po-ink);
     }
     div[data-testid="stMetric"] {
-        background: rgba(255,255,255,0.94);
+        background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(255,237,213,0.86));
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
         padding: 14px 16px;
-        box-shadow: 0 8px 20px rgba(33, 43, 36, 0.045);
+        box-shadow: 0 10px 24px rgba(124, 45, 18, 0.08);
     }
     div[data-testid="stMetric"] label {
         color: var(--po-muted);
@@ -72,7 +78,7 @@ st.markdown(
         letter-spacing: 0.05em;
     }
     div[data-testid="stMetric"] [data-testid="stMetricValue"] {
-        color: var(--po-ink);
+        color: var(--po-orange-deep);
         font-weight: 760;
     }
     .po-topline {
@@ -84,11 +90,13 @@ st.markdown(
         margin-bottom: 18px;
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: rgba(255,255,255,0.88);
+        background:
+            linear-gradient(135deg, rgba(255,247,237,0.98), rgba(255,237,213,0.92)),
+            var(--po-panel);
         box-shadow: var(--po-shadow);
     }
     .po-kicker {
-        color: var(--po-green);
+        color: var(--po-orange-dark);
         font-size: 12px;
         font-weight: 800;
         text-transform: uppercase;
@@ -120,18 +128,18 @@ st.markdown(
         padding: 7px 12px;
         border-radius: 999px;
         border: 1px solid var(--po-line);
-        background: #fff;
-        color: var(--po-ink);
+        background: #fffaf5;
+        color: var(--po-orange-deep);
         font-size: 12px;
         font-weight: 760;
         white-space: nowrap;
     }
-    .po-pill.green { color: var(--po-green); border-color: rgba(31,111,74,0.32); background: #edf8f1; }
-    .po-pill.amber { color: var(--po-amber); border-color: rgba(169,111,24,0.32); background: #fff6e6; }
-    .po-pill.blue { color: var(--po-blue); border-color: rgba(37,92,153,0.30); background: #eef5ff; }
+    .po-pill.green { color: var(--po-green); border-color: rgba(15,118,110,0.28); background: #ecfdf5; }
+    .po-pill.amber { color: var(--po-amber); border-color: rgba(249,115,22,0.34); background: #ffedd5; }
+    .po-pill.blue { color: var(--po-orange-dark); border-color: rgba(194,65,12,0.28); background: #fff7ed; }
     .po-section {
         margin: 18px 0 10px;
-        color: var(--po-muted);
+        color: var(--po-orange-dark);
         font-size: 12px;
         font-weight: 800;
         text-transform: uppercase;
@@ -140,13 +148,13 @@ st.markdown(
     .po-panel {
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: rgba(255,255,255,0.9);
+        background: rgba(255,250,245,0.94);
         padding: 16px;
-        box-shadow: 0 10px 26px rgba(33, 43, 36, 0.05);
+        box-shadow: 0 10px 26px rgba(124, 45, 18, 0.07);
     }
     .po-panel-title {
         margin: 0 0 6px;
-        color: var(--po-ink);
+        color: var(--po-orange-deep);
         font-weight: 820;
         font-size: 17px;
     }
@@ -161,13 +169,40 @@ st.markdown(
         gap: 12px;
         margin: 14px 0 8px;
     }
+    .po-loop-rail {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        align-items: center;
+        margin: 8px 0 14px;
+        padding: 10px;
+        border: 1px solid rgba(240,201,168,0.86);
+        border-radius: var(--po-radius);
+        background: rgba(255,250,245,0.72);
+    }
+    .po-rail-item {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--po-radius);
+        background: #ffedd5;
+        color: var(--po-orange-deep);
+        font-size: 12px;
+        font-weight: 820;
+        text-align: center;
+    }
+    .po-rail-item.ready {
+        background: var(--po-orange);
+        color: #fffaf5;
+    }
     .po-step {
         min-height: 128px;
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: rgba(255,255,255,0.91);
+        background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(255,237,213,0.7));
         padding: 14px;
-        box-shadow: 0 8px 20px rgba(33, 43, 36, 0.045);
+        box-shadow: 0 10px 24px rgba(124, 45, 18, 0.08);
     }
     .po-step-top {
         display: flex;
@@ -183,8 +218,8 @@ st.markdown(
         width: 26px;
         height: 26px;
         border-radius: 999px;
-        background: #eef5ff;
-        color: var(--po-blue);
+        background: var(--po-orange);
+        color: #fffaf5;
         font-size: 12px;
         font-weight: 820;
     }
@@ -196,10 +231,10 @@ st.markdown(
     }
     .po-step-state.green { color: var(--po-green); }
     .po-step-state.amber { color: var(--po-amber); }
-    .po-step-state.blue { color: var(--po-blue); }
+    .po-step-state.blue { color: var(--po-orange-dark); }
     .po-step-title {
         margin: 0 0 7px;
-        color: var(--po-ink);
+        color: var(--po-orange-deep);
         font-size: 15px;
         font-weight: 820;
     }
@@ -211,10 +246,11 @@ st.markdown(
     }
     .po-next-action {
         margin: 10px 0 18px;
-        border-left: 4px solid var(--po-green);
+        border-left: 4px solid var(--po-orange);
         border-radius: var(--po-radius);
-        background: rgba(237,248,241,0.88);
+        background: linear-gradient(90deg, rgba(255,237,213,0.96), rgba(255,250,245,0.9));
         padding: 13px 15px;
+        box-shadow: 0 10px 24px rgba(124, 45, 18, 0.06);
     }
     .po-next-action strong {
         display: block;
@@ -235,11 +271,12 @@ st.markdown(
     .po-evidence-item {
         border: 1px solid var(--po-line);
         border-radius: var(--po-radius);
-        background: rgba(255,255,255,0.9);
+        background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(255,237,213,0.72));
         padding: 14px;
+        box-shadow: 0 8px 20px rgba(124, 45, 18, 0.07);
     }
     .po-evidence-value {
-        color: var(--po-ink);
+        color: var(--po-orange-dark);
         font-size: 24px;
         line-height: 1;
         font-weight: 840;
@@ -257,7 +294,7 @@ st.markdown(
         grid-template-columns: 72px minmax(0, 1fr);
         gap: 10px;
         padding: 9px 0;
-        border-bottom: 1px solid rgba(217,226,218,0.74);
+        border-bottom: 1px solid rgba(240,201,168,0.76);
         font-size: 13px;
     }
     .po-ledger-row:last-child { border-bottom: 0; }
@@ -268,21 +305,24 @@ st.markdown(
         border: 1px dashed var(--po-line);
         border-radius: var(--po-radius);
         color: var(--po-muted);
-        background: rgba(255,255,255,0.58);
+        background: rgba(255,247,237,0.72);
         font-size: 13px;
     }
     .stChatMessage {
-        border: 1px solid rgba(217,226,218,0.72);
+        border: 1px solid rgba(240,201,168,0.78);
         border-radius: var(--po-radius);
-        background: rgba(255,255,255,0.86);
+        background: rgba(255,250,245,0.92);
     }
     .stTextInput input, .stTextArea textarea {
         border-radius: var(--po-radius);
         border-color: var(--po-line);
+        background: #fffaf5;
     }
     .stButton button {
         border-radius: var(--po-radius);
         font-weight: 760;
+        border-color: var(--po-orange);
+        color: var(--po-orange-deep);
     }
     [data-testid="stDeployButton"] {
         display: none;
@@ -297,7 +337,8 @@ st.markdown(
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .po-loop-grid,
-        .po-evidence-grid {
+        .po-evidence-grid,
+        .po-loop-rail {
             grid-template-columns: 1fr;
         }
     }
@@ -376,6 +417,11 @@ def render_step(index: int, title: str, copy: str, state: str, tone: str) -> str
     """
 
 
+def render_rail_item(label: str, ready: bool) -> str:
+    state_class = "ready" if ready else ""
+    return f'<div class="po-rail-item {state_class}">{escape(label)}</div>'
+
+
 def workflow_snapshot(jd_input: str) -> dict:
     resume_count = len(st.session_state["resume_file_names"])
     has_resume = bool(st.session_state["extracted_resume_text"])
@@ -427,6 +473,12 @@ def workflow_snapshot(jd_input: str) -> dict:
     ]
     return {
         "steps": steps,
+        "rail": [
+            ("收集材料", has_resume and has_jd),
+            ("生成判断", settings.has_llm_config),
+            ("执行动作", bool(interviews or pending_approvals)),
+            ("审计复核", bool(integrity.get("valid"))),
+        ],
         "next_action": next_action,
         "interviews": interviews,
         "approvals": approvals,
@@ -439,6 +491,12 @@ def workflow_snapshot(jd_input: str) -> dict:
 def render_workflow_loop(jd_input: str) -> dict:
     snapshot = workflow_snapshot(jd_input)
     st.markdown('<div class="po-section">Closed Loop</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="po-loop-rail">'
+        + "".join(render_rail_item(label, ready) for label, ready in snapshot["rail"])
+        + "</div>",
+        unsafe_allow_html=True,
+    )
     st.markdown(
         '<div class="po-loop-grid">'
         + "".join(

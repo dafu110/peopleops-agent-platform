@@ -1,43 +1,34 @@
 # PeopleOps Agent Platform
 
-PeopleOps Agent Platform is an engineering-first HRBP Agent reference project for AI-native HCM scenarios. It goes beyond a RAG demo: the app includes persistent retrieval, a LangGraph workflow, resume/JD matching, local ATS records, email draft generation, calendar artifacts, access control, audit logs, PII redaction, a FastAPI backend, Docker deployment files, RAG evaluation scripts, and enterprise hardening controls.
+PeopleOps Agent Platform is an AI-native HRBP workbench for policy Q&A, resume/JD matching, interview actions, approvals, audit evidence, and local ATS-style records. It is designed as a practical reference project rather than a single-purpose RAG demo.
 
-## Visual Product Walkthrough
+The Streamlit workbench now follows an orange operations-console visual system and a closed-loop workflow:
 
-The workbench now presents the project as an enterprise HR operations console rather than a generic chatbot. The visual direction is intentionally quiet, dense, and audit-oriented: paper-toned surfaces, ledger-like evidence rows, compact status pills, and operational metrics that help an interviewer understand the product in the first 30 seconds.
+```text
+Assemble context -> Agent judgment -> Execute action -> Governance evidence
+```
 
-### HRBP Operations Console
+## Product Experience
 
-![PeopleOps workbench overview](docs/screenshots/peopleops-workbench-overview.png)
+The app is organized around the daily flow of an HR operator.
 
-The first screen shows the core loop: candidate inputs on the left, enterprise readiness signals at the top, operating metrics in the middle, and the Agent workspace as the main surface.
+- **Assemble context**: upload candidate resumes, paste the JD, preview extracted resume text, and check runtime readiness.
+- **Agent judgment**: route questions to policy RAG, resume/JD matching, or action tools through the LangGraph workflow.
+- **Execute action**: create local interview actions, email drafts, calendar artifacts, approval requests, and ATS sync payloads.
+- **Governance evidence**: review recent actions, pending approvals, audit events, connector readiness, and audit-chain integrity.
 
-### Candidate Context Assembly
+The UI uses a consistent orange palette, compact status pills, workflow cards, a closed-loop rail, operational metrics, and ledger-style evidence rows so the first screen explains both the product and the control model.
 
-![PeopleOps candidate context panel](docs/screenshots/peopleops-candidate-context.png)
+## Core Capabilities
 
-The sidebar is designed as a task assembly rail for resume upload, JD paste-in, policy citation preview, and runtime health checks. This keeps the HRBP flow focused before the Agent response is generated.
-
-### Governance Evidence
-
-![PeopleOps governance evidence](docs/screenshots/peopleops-governance-evidence.png)
-
-The governance tab makes the enterprise story visible: recent interview actions, approval queue state, and audit trail evidence are surfaced as first-class product areas instead of being hidden in logs.
-
-## What It Demonstrates
-
-- AI Agent workflow: `core/workflow.py` routes requests to RAG, resume matching, or tools.
-- Enterprise policy RAG: `core/rag_engine.py` uses persistent Chroma and page citations.
-- Resume/JD matching: `core/matcher.py` produces structured `score / pros / cons`; the workbench can import PDF, DOCX, TXT, and Markdown resumes.
-- Real local tool execution: `core/tools.py` writes ATS records to SQLite, creates `.eml` email drafts, creates `.ics` calendar files with start/end times, and exports local ATS sync payloads.
-- User and role foundation: `core/auth.py` defines principals, roles, and permissions.
-- Tenant-aware database foundation: `core/database.py` manages SQLite tables for users, tenant-scoped interview actions, approval requests, and RAG eval metrics.
-- Security and governance: `core/security.py` recursively redacts phone numbers, emails, and ID-card-like values; `core/audit.py` writes JSONL audit logs with request IDs, hash chaining, and integrity verification.
-- SaaS-ready backend: `api.py` exposes health, identity, chat, interview, and audit endpoints.
-- Enterprise controls: tenant headers, readiness warnings, mandatory access-password mode, PBKDF2 password hashes, API rate limits, manual approval requests, connector inventory, and audit APIs.
-- Deployment: `Dockerfile`, `docker-compose.yml`, and `docs/deployment.md`.
-- AI coding transparency: `docs/ai-coding-workflow.md`.
-- Professional HR workbench: `app.py` includes runtime metrics, resume preview, and RAG citation preview.
+- AI agent workflow in `core/workflow.py` with intent routing for RAG, resume analysis, and tool execution.
+- Enterprise policy retrieval in `core/rag_engine.py` with persistent Chroma indexing and page-aware citations.
+- Resume/JD matching in `core/matcher.py` with structured `score`, `pros`, and `cons` output.
+- Local tool execution in `core/tools.py` for interview scheduling, email drafts, calendar `.ics` files, ATS exports, and approval gates.
+- SQLite persistence in `core/database.py` for users, interview actions, approval requests, tenant scope, and RAG eval metrics.
+- Security and governance foundations: access password support, roles, tenant headers, PII redaction, hash-chained audit logs, and audit integrity checks.
+- FastAPI control plane in `api.py` for health, readiness, identity, chat, interviews, approvals, connectors, and audit endpoints.
+- Deployment assets: `Dockerfile`, `docker-compose.yml`, `.devcontainer`, and deployment notes under `docs/`.
 
 ## Architecture
 
@@ -137,7 +128,7 @@ When `REQUIRE_ACCESS_PASSWORD=true`, the API refuses authenticated operations un
 | `SMTP_PORT` | `587` | SMTP port |
 | `SMTP_FROM` | `hr@example.com` | Sender for interview invitation email |
 
-## Enterprise Hardening
+## Enterprise Controls
 
 - Set `ENTERPRISE_MODE=true` and `REQUIRE_ACCESS_PASSWORD=true` before exposing the API beyond a local demo.
 - Store `ACCESS_PASSWORD` as `pbkdf2_sha256$...`; plain text and legacy `sha256:` values are accepted for compatibility but reported in readiness warnings.
@@ -146,39 +137,9 @@ When `REQUIRE_ACCESS_PASSWORD=true`, the API refuses authenticated operations un
 - Use `X-Tenant-ID`, `X-Org-ID`, and `X-Department-ID` on API calls to isolate interviews, approvals, audit context, and downstream ATS payloads.
 - Review `/approvals` before executing interview invites, rejection drafts, offer drafts, calendar invites, or ATS stage changes.
 - Review `/connectors` to see which enterprise HRIS, ATS, collaboration, mail, and calendar integrations are configured or still planned.
-- Review `/health` for `enterprise_warnings` during deployment checks, and use `/readiness` as a deployment gate.
 - Use `/audit/events` for recent audit inspection; each record includes a request ID and a hash-chain pointer to make accidental tampering visible.
 - Use `/audit/integrity` to verify the audit hash chain before exporting evidence or closing an incident review.
 - Treat SQLite, local files, and local Chroma as a reference implementation. For production, move state to PostgreSQL, object storage, and a managed vector/search service with tenant isolation.
-
-## Current Enterprise Score
-
-After the hardening controls in this branch, the project is assessed at **98/100** for an enterprise-grade reference implementation:
-
-- 20/20 HR business value: policy RAG, resume/JD matching, ATS records, email drafts, calendar artifacts, and HRBP workflow coverage.
-- 20/20 agent and RAG completeness: LangGraph routing, persistent retrieval, page citations, matcher output, tool execution, and expanded eval hooks.
-- 19/20 security and governance: RBAC, access-password mode, tenant scope, PII redaction, hash-chain audit, readiness warnings, and approval requests.
-- 19/20 engineering maturity: API control plane, migrations, connector inventory, Docker/devcontainer assets, CI-ready tests, and dependency-light health paths.
-- 20/20 product demonstration value: Streamlit workbench, FastAPI surface, RAG eval script, tool artifacts, and deployment docs.
-
-## Validation
-
-```powershell
-python -m py_compile app.py api.py core\config.py core\auth.py core\database.py core\security.py core\audit.py core\tools.py core\pdf_utils.py core\workflow.py core\rag_engine.py core\matcher.py
-python -m unittest discover -s tests
-```
-
-Clean-install validation notes and a test evidence screenshot are available in [`docs/clean-install-and-test.md`](docs/clean-install-and-test.md).
-
-![PeopleOps Agent Platform test evidence](docs/test-evidence-2026-06-24.png)
-
-RAG evaluation:
-
-```powershell
-python scripts\evaluate_rag.py
-```
-
-The RAG evaluator reports keyword coverage, citation count, and retrieved context size for each case.
 
 ## Docker
 
@@ -192,6 +153,6 @@ This project is suitable for an AI Engineer Agent role because it demonstrates:
 
 - Python-based AI application development.
 - LLM/RAG/Agent workflow implementation.
-- AI Native HR product thinking.
+- AI-native HR product thinking.
 - Tool calling that creates real local business artifacts.
-- Engineering maturity: persistence, audit, redaction, tests, API, and deployment docs.
+- Engineering maturity across persistence, audit, redaction, API, and deployment surfaces.
